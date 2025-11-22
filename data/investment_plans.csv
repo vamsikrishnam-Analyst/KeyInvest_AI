@@ -1,0 +1,11 @@
+PlanID,PlanName,Type,RiskLevel,MinInvestment,ExpectedReturn,DurationYears,Description
+1,Key Growth Fund,Mutual Fund,Moderate,100,8.5,5,"Balanced portfolio focusing on equities and bonds for long-term growth."
+2,Key Secure Income Fund,Bond Fund,Low,200,5.2,3,"Fixed income securities including treasury and corporate bonds to reduce volatility."
+3,Key Aggressive Equity Portfolio,Mutual Fund,High,500,12.1,10,"High-growth equity fund with emphasis on technology and global markets."
+4,Key Sustainable Future ETF,ETF,Moderate,150,7.8,7,"ESG-focused ETF tracking sustainable companies with medium risk and return."
+5,Key Global Diversified Index Fund,Index Fund,Low,250,6.0,6,"International exposure with diversified sectors to spread risk and target steady returns."
+6,Key HSA Investment Option,Mutual Fund,Low,1000,6.5,8,"Investment option for Health Savings Account holders investing via KIS product line."
+7,Key Managed Account Strategy,Managed Account,Moderate,5000,9.0,10,"Professionally managed portfolio tailored to your goals and risk tolerance."
+8,Key Retirement Builder IRA Fund,Mutual Fund,Moderate,300,8.0,10,"Retirement-oriented mutual fund for long-term asset accumulation."
+9,Key Income Real Estate Fund,REIT Fund,High,400,10.5,7,"Real estate investment trust fund targeting income and capital appreciation."
+10,Key Short-Term Opportunity Fund,Money Market,Very Low,50,4.0,2,"Short-duration investment vehicle for capital preservation."
