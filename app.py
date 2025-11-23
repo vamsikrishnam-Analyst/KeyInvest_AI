@@ -1,88 +1,108 @@
-import streamlit as st
-import pandas as pd
+from openai import OpenAI
 from dotenv import load_dotenv
+import pandas as pd
 import os
-import requests
-import json
+import streamlit as st
 
-# Load environment variables (in case we add API keys or other configs later)
+# Load environment variables
 load_dotenv()
 
-# --- Streamlit Page Setup ---
-# Setting up the page title, icon, and layout — keeping it consistent with KeyBank branding
-st.set_page_config(page_title="KeyInvest AI", page_icon="🔑", layout="wide")
+# Initialize the OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# --- Header Section ---
-# Displaying the KeyBank logo and app title
-st.image("docs/KeyBank-logo.png", width=180)
-st.title("KeyInvest AI")
-st.markdown("### Your personalized KeyBank investment assistant")
+# --- PAGE SETUP ---
+st.set_page_config(page_title="KeyInvest AI", page_icon="🗝️", layout="centered")
 
-# --- Load Investment Dataset ---
-# Path to your local dataset — make sure the CSV exists in the /data folder
-data_path = "data/investment_plans.csv"
+# --- TITLE & HEADER ---
+st.image("docs/KeyBank-logo.png", width=200)  # Keep your KeyBank logo here
+st.markdown("<h2 style='text-align: center; color: #B30C00;'>KeyInvest AI</h2>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: gray;'>Your virtual KeyBank investment assistant</p>", unsafe_allow_html=True)
 
-try:
-    df = pd.read_csv(data_path)
-except Exception as e:
-    st.error(f"⚠️ Could not load dataset: {e}")
-    st.stop()
+# --- API SETUP ---
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# --- Sidebar Filters ---
-# Simple filter to let users select investment options by risk level
-st.sidebar.header("Filter Investment Options")
-risk_filter = st.sidebar.selectbox("Select Risk Level", ["All"] + df["RiskLevel"].unique().tolist())
+# --- SAMPLE DATASET ---
+data = {
+    "Risk Level": ["Low", "Moderate", "High"],
+    "Expected Return (%)": [3.5, 6.0, 9.0],
+    "Investment Option": [
+        "Key Secure Bond Fund",
+        "Key Balanced Growth Fund",
+        "Key Aggressive Equity Portfolio"
+    ]
+}
+df = pd.DataFrame(data)
 
-# If user chooses a specific risk level, filter the DataFrame accordingly
-if risk_filter != "All":
-    df = df[df["RiskLevel"] == risk_filter]
+# --- SESSION STATE ---
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
+if "last_input" not in st.session_state:
+    st.session_state["last_input"] = ""
 
-# --- Display Investment Plans ---
-st.write("### Recommended Plans")
-st.dataframe(df[["PlanName", "Type", "RiskLevel", "ExpectedReturn", "DurationYears", "Description"]])
+# --- CHAT DISPLAY AREA ---
+chat_container = st.container()
+with chat_container:
+    for msg in st.session_state["messages"]:
+        if msg["role"] == "user":
+            st.markdown(
+                f"<div style='background-color:#f5f5f5; padding:10px; border-radius:8px; margin-bottom:5px;'>"
+                f"<b>🗝️ You:</b> {msg['content']}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(
+                f"<div style='background-color:#ffffff; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:5px;'>"
+                f"<b>🤖 KeyInvest AI:</b> {msg['content']}</div>", unsafe_allow_html=True)
 
-st.caption("Powered by KeyBank Data • Built by Vamsi Krishna Mulinti")
+# --- WELCOME MESSAGE ---
+if not st.session_state["messages"]:
+    st.markdown("<p style='color:black;'>💬 Welcome! Ask me anything about KeyBank’s investment options — for example, ‘What’s a low-risk plan?’</p>", unsafe_allow_html=True)
 
-# --- AI Assistant Section ---
-# Main chat-style interface where users can ask questions
-st.subheader("💬 Looking to Invest? Ask KeyInvest AI")
-user_query = st.text_input("Ask a question about these plans (e.g., 'What’s the best low-risk option under $500?')")
+# --- USER INPUT BOX ---
+user_input = st.chat_input("Type your question below:")
 
-# --- Connect to Ollama (Local LLM) ---
-# This part sends the user’s question + dataset context to the local model (llama3)
-if user_query:
-    # Convert the dataframe to string so the model can understand the dataset context
+# --- CHAT LOGIC ---
+if user_input and st.session_state["last_input"] != user_input:
+    st.session_state["messages"].append({"role": "user", "content": user_input})
+    st.session_state["last_input"] = user_input
+
+    # Build context
     context = df.to_string(index=False)
-    
-    # Build a concise prompt for the model
     prompt = f"""
-    You are KeyInvest AI, an investment assistant for KeyBank customers.
-    Use this dataset context to answer accurately, clearly, and professionally.
+    You are KeyInvest AI, a friendly financial assistant for KeyBank customers.
+    Use this dataset to suggest suitable KeyBank investment options.
+    Include approximate expected returns when relevant:
+      - Low Risk: ~3–4% annual return
+      - Moderate Risk: ~5–7% annual return
+      - High Risk: ~8–10% annual return
+    Keep the answer short (3–5 lines) and natural.
 
     Dataset:
     {context}
 
-    User question: {user_query}
-    Answer:
+    Customer Question: {user_input}
     """
 
-    # Processing phase indicator (spinner)
-    with st.spinner("Analyzing investment plans..."):
+    with st.spinner("Analyzing investment options..."):
         try:
-            response = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": "llama3",
-                    "prompt": prompt,
-                    "stream": False
-                }
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are KeyInvest AI, a helpful KeyBank investment advisor."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.6,
+                max_tokens=180
             )
 
-            # Parse and display the model’s response
-            data = response.json()
-            answer = data.get("response", "No response received.")
-            st.success(answer)
+            answer = response.choices[0].message.content.strip()
+            answer += "\n\n🔗 [Visit KeyBank Investments](https://www.key.com/personal/investments/index.jsp)"
+            st.session_state["messages"].append({"role": "assistant", "content": answer})
 
-        # Catch-all in case Ollama isn’t running or connection fails
         except Exception as e:
-            st.error(f"⚠️ Error connecting to Ollama: {e}")
+            st.error(f"⚠️ Something went wrong: {e}")
+
+# --- FOOTER ---
+st.markdown(
+    "<br><a href='https://www.key.com/personal/investments/index.jsp' target='_blank' style='color:#B30C00;'>Visit KeyBank Investments</a>",
+    unsafe_allow_html=True,
+)
+st.caption("Built by Vamsi Krishna Mulinti • Powered by OpenAI • Prototype for KeyBank AI")
