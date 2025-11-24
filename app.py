@@ -94,7 +94,7 @@ if user_input and st.session_state["last_input"] != user_input:
             )
 
             answer = response.choices[0].message.content.strip()
-            answer += "\n\n🔗 [Visit KeyBank Investments](https://www.key.com/personal/investments/index.jsp)"
+            answer += "\n\n🔗 [Visit KeyBank Investments](https://www.key.com/personal/financial-wellness/investing-retirement.html?page=2)"
             st.session_state["messages"].append({"role": "assistant", "content": answer})
 
         except Exception as e:
@@ -102,7 +102,7 @@ if user_input and st.session_state["last_input"] != user_input:
 
 # --- FOOTER ---
 st.markdown(
-    "<br><a href='https://www.key.com/personal/investments/index.jsp' target='_blank' style='color:#B30C00;'>Visit KeyBank Investments</a>",
+    "<br><a href='https://www.key.com/personal/financial-wellness/investing-retirement.html?page=2' target='_blank' style='color:#B30C00;'>Visit KeyBank Investments</a>",
     unsafe_allow_html=True,
 )
 st.caption("Built by Vamsi Krishna Mulinti • Powered by OpenAI • Prototype for KeyBank AI")
