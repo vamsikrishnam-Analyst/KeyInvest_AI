@@ -7,19 +7,16 @@ import streamlit as st
 # Load environment variables
 load_dotenv()
 
-# Initialize the OpenAI client
+# Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- PAGE SETUP ---
 st.set_page_config(page_title="KeyInvest AI", page_icon="🗝️", layout="centered")
 
 # --- TITLE & HEADER ---
-st.image("docs/KeyBank-logo.png", width=200)  # Keep your KeyBank logo here
+st.image("docs/KeyBank-logo.png", width=200)
 st.markdown("<h2 style='text-align: center; color: #B30C00;'>KeyInvest AI</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: gray;'>Your virtual KeyBank investment assistant</p>", unsafe_allow_html=True)
-
-# --- API SETUP ---
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- SAMPLE DATASET ---
 data = {
@@ -36,8 +33,6 @@ df = pd.DataFrame(data)
 # --- SESSION STATE ---
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
-if "last_input" not in st.session_state:
-    st.session_state["last_input"] = ""
 
 # --- CHAT DISPLAY AREA ---
 chat_container = st.container()
@@ -46,25 +41,32 @@ with chat_container:
         if msg["role"] == "user":
             st.markdown(
                 f"<div style='background-color:#f5f5f5; padding:10px; border-radius:8px; margin-bottom:5px;'>"
-                f"<b>🗝️ You:</b> {msg['content']}</div>", unsafe_allow_html=True)
+                f"<b>🗝️ You:</b> {msg['content']}</div>",
+                unsafe_allow_html=True
+            )
         else:
             st.markdown(
                 f"<div style='background-color:#ffffff; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:5px;'>"
-                f"<b>🤖 KeyInvest AI:</b> {msg['content']}</div>", unsafe_allow_html=True)
+                f"<b>🤖 KeyInvest AI:</b> {msg['content']}</div>",
+                unsafe_allow_html=True
+            )
 
 # --- WELCOME MESSAGE ---
 if not st.session_state["messages"]:
-    st.markdown("<p style='color:black;'>💬 Welcome! Ask me anything about KeyBank’s investment options — for example, ‘What’s a low-risk plan?’</p>", unsafe_allow_html=True)
+    st.markdown(
+        "<p style='color:black;'>💬 Welcome! Ask me anything about KeyBank’s investment options — for example, ‘What’s a low-risk plan?’</p>",
+        unsafe_allow_html=True
+    )
 
 # --- USER INPUT BOX ---
 user_input = st.chat_input("Type your question below:")
 
-# --- CHAT LOGIC ---
-if user_input and st.session_state["last_input"] != user_input:
+# --- UPDATED CHAT LOGIC (FIXES 1-QUESTION DELAY) ---
+if user_input:
+    # Save user message immediately
     st.session_state["messages"].append({"role": "user", "content": user_input})
-    st.session_state["last_input"] = user_input
 
-    # Build context
+    # Build dataset context
     context = df.to_string(index=False)
     prompt = f"""
     You are KeyInvest AI, a friendly financial assistant for KeyBank customers.
@@ -81,6 +83,7 @@ if user_input and st.session_state["last_input"] != user_input:
     Customer Question: {user_input}
     """
 
+    # Call the AI model
     with st.spinner("Analyzing investment options..."):
         try:
             response = client.chat.completions.create(
@@ -95,14 +98,21 @@ if user_input and st.session_state["last_input"] != user_input:
 
             answer = response.choices[0].message.content.strip()
             answer += "\n\n🔗 [Visit KeyBank Investments](https://www.key.com/personal/financial-wellness/investing-retirement.html?page=2)"
+
+            # Save assistant reply
             st.session_state["messages"].append({"role": "assistant", "content": answer})
 
         except Exception as e:
             st.error(f"⚠️ Something went wrong: {e}")
 
+    # Refresh Streamlit to show updated messages instantly
+    st.rerun()
+
 # --- FOOTER ---
 st.markdown(
-    "<br><a href='https://www.key.com/personal/financial-wellness/investing-retirement.html?page=2' target='_blank' style='color:#B30C00;'>Visit KeyBank Investments</a>",
+    "<br><a href='https://www.key.com/personal/financial-wellness/investing-retirement.html?page=2' "
+    "target='_blank' style='color:#B30C00;'>Visit KeyBank Investments</a>",
     unsafe_allow_html=True,
 )
+
 st.caption("Built by Vamsi Krishna Mulinti • Powered by OpenAI • Prototype for KeyBank AI")
