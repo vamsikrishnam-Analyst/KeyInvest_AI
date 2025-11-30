@@ -34,21 +34,20 @@ df = pd.DataFrame(data)
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
-
 # ---------------------------------------------------------
-# --- CHAT DISPLAY (LEFT/RIGHT BUBBLES) ---
+# --- CHAT DISPLAY: LEFT & RIGHT BUBBLES ---
 # ---------------------------------------------------------
 chat_container = st.container()
 with chat_container:
     for msg in st.session_state["messages"]:
 
-        # USER BUBBLE (RIGHT SIDE)
+        # USER MESSAGE (right)
         if msg["role"] == "user":
             st.markdown(
                 f"""
                 <div style='display:flex; justify-content:flex-end; margin:8px 0;'>
                     <div style='background-color:#e8e8e8; padding:10px 14px; border-radius:12px;
-                                max-width:70%; text-align:left; box-shadow:0 1px 2px rgba(0,0,0,0.12);'>
+                        max-width:70%; text-align:left; box-shadow:0 1px 2px rgba(0,0,0,0.12);'>
                         <b><span style='color:#B30C00;'>🔑 You:</span></b> {msg['content']}
                     </div>
                 </div>
@@ -56,14 +55,14 @@ with chat_container:
                 unsafe_allow_html=True
             )
 
-        # BOT BUBBLE (LEFT SIDE)
+        # BOT MESSAGE (left)
         else:
             st.markdown(
                 f"""
                 <div style='display:flex; justify-content:flex-start; margin:8px 0;'>
                     <div style='background-color:#ffffff; padding:10px 14px; border-radius:12px;
-                                border:1px solid #ddd; max-width:70%; text-align:left;
-                                box-shadow:0 1px 2px rgba(0,0,0,0.08);'>
+                        border:1px solid #ddd; max-width:70%; text-align:left;
+                        box-shadow:0 1px 2px rgba(0,0,0,0.08);'>
                         <b><span style='color:#B30C00;'>🔑 KeyInvest AI:</span></b> {msg['content']}
                     </div>
                 </div>
@@ -71,15 +70,14 @@ with chat_container:
                 unsafe_allow_html=True
             )
 
-
-# --- WELCOME MESSAGE ---
+# --- WELCOME MESSAGE (only when empty) ---
 if not st.session_state["messages"]:
     st.markdown(
         "<p style='color:black;'>💬 Welcome! Ask me anything about KeyBank’s investment options — for example, ‘What’s a low-risk plan?’</p>",
         unsafe_allow_html=True
     )
 
-# --- USER INPUT ---
+# --- USER INPUT BOX ---
 user_input = st.chat_input("Type your question below:")
 
 # ---------------------------------------------------------
@@ -128,12 +126,11 @@ if user_input:
 
     st.rerun()
 
-
 # ---------------------------------------------------------
-# --- FOOTER WITH PERFECT ALIGNMENT ---
+# --- FOOTER + CENTERED WORKING RESTART BUTTON ---
 # ---------------------------------------------------------
 
-# EXACT LINK WITH TIGHT SPACING ABOVE
+# Link
 st.markdown(
     "<div style='text-align:center; margin-top:10px;'>"
     "<a href='https://www.key.com/personal/financial-wellness/investing-retirement.html?page=2' "
@@ -142,25 +139,13 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# RESTART BUTTON RIGHT BELOW THE LINK (NO EXTRA SPACE)
+# Centered Restart Button (WORKING VERSION)
 if st.session_state["messages"]:
-    st.markdown(
-        """
-        <div style='display:flex; justify-content:center; margin-top:6px; margin-bottom:8px;'>
-            <button onclick="window.location.reload();" 
-                style="
-                    background-color:white; 
-                    border:1px solid #cccccc; 
-                    padding:6px 16px; 
-                    border-radius:6px; 
-                    font-size:14px; 
-                    cursor:pointer;">
-                🔄 Restart Conversation
-            </button>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    left, center, right = st.columns([1,1,1])
+    with center:
+        if st.button("🔄 Restart Conversation"):
+            st.session_state["messages"] = []
+            st.rerun()
 
-# FOOTER SIGNATURE
+# Footer text
 st.caption("Built by Vamsi Krishna Mulinti • Powered by OpenAI • Prototype for KeyBank AI")
